@@ -1,1 +1,396 @@
-/* You can add global styles to this file, and also import other style files */
+:root {
+	/* Base color palette tokens */
+	--yellow-strong: #ffd600;
+	--yellow-soft: #fff59d;
+	--yellow-muted: #ffe082;
+	--black-strong: #121212;
+	--black-soft: #1e1e1e;
+	--text-on-dark: #f9f9f9;
+	--text-muted: #bdbdbd;
+	--border-subtle: #333333;
+	--danger: #ff5252;
+
+	/* Semantic color tokens */
+	--color-body-bg: var(--black-strong);
+	--color-shell-bg: radial-gradient(circle at top left, var(--yellow-muted) 0, transparent 55%),
+		radial-gradient(circle at bottom right, #000 0, #000 45%);
+	--color-panel-bg: rgba(0, 0, 0, 0.78);
+	--color-header-bg: linear-gradient(90deg, var(--black-soft), #000000);
+	--color-nav-bg: #0f172a;
+	--color-nav-link: #e5e7eb;
+	--color-nav-link-active: #38bdf8;
+
+	/* Spacing tokens */
+	--space-xs: 0.25rem;
+	--space-sm: 0.5rem;
+	--space-md: 0.75rem;
+	--space-lg: 1rem;
+	--space-xl: 1.5rem;
+
+	/* Radius tokens */
+	--radius-sm: 0.4rem;
+	--radius-md: 0.5rem;
+	--radius-lg: 0.75rem;
+	--radius-pill: 999px;
+}
+
+html,
+body {
+	height: 100%;
+}
+
+body {
+	margin: 0;
+	font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+		Roboto, Helvetica, Arial, sans-serif;
+	background-color: var(--color-body-bg);
+	color: var(--text-on-dark);
+}
+
+.app-shell {
+	min-height: 100vh;
+	padding: var(--space-xl) 2rem 2rem;
+	background: var(--color-shell-bg);
+}
+
+.app-header {
+	border-radius: var(--radius-lg);
+	padding: var(--space-xl) 1.75rem;
+	background: var(--color-header-bg);
+	border: 1px solid var(--border-subtle);
+	box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
+}
+
+.app-header__title {
+	margin: 0 0 0.25rem;
+	font-size: 1.9rem;
+	letter-spacing: 0.03em;
+}
+
+.app-header__subtitle {
+	margin: 0 0 0.25rem;
+	color: var(--yellow-soft);
+}
+
+.app-header__meta {
+	margin: 0;
+	font-size: 0.85rem;
+	color: var(--text-muted);
+}
+
+.app-grid {
+	margin-top: 1.5rem;
+	display: grid;
+	gap: 1rem;
+	grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+	/* align-items: start keeps each cell at its natural height so CDK can
+	   compute correct midpoints for cross-row drag-and-drop. */
+	align-items: start;
+}
+
+.app-panel {
+	background: var(--color-panel-bg);
+	border-radius: var(--radius-lg);
+	border: 1px solid var(--border-subtle);
+	padding: var(--space-lg) 1.25rem 1.2rem;
+}
+
+.app-panel h2 {
+	margin: 0 0 0.5rem;
+	font-size: 1.1rem;
+	color: var(--yellow-strong);
+}
+
+.app-panel p {
+	margin: 0.15rem 0;
+}
+
+.app-panel__note {
+	margin-top: 0.75rem;
+	font-size: 0.85rem;
+	color: var(--text-muted);
+}
+
+.card {
+	border-radius: 0.65rem;
+	border: 1px solid var(--border-subtle);
+	padding: 0.75rem 0.9rem;
+	background: #181818;
+	margin-bottom: 0.6rem;
+}
+
+.card--emphasis {
+	border-color: var(--yellow-strong);
+	box-shadow: 0 0 0 1px var(--yellow-strong);
+}
+
+.card__title {
+	margin: 0 0 0.1rem;
+	font-size: 0.95rem;
+}
+
+.card__value {
+	margin: 0;
+	font-size: 1.2rem;
+	font-weight: 600;
+}
+
+.card__hint {
+	margin: 0.25rem 0 0;
+	font-size: 0.8rem;
+	color: var(--text-muted);
+}
+
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.field__label {
+	font-size: 0.85rem;
+	color: var(--text-muted);
+}
+
+.field__input {
+	padding: 0.4rem 0.55rem;
+	border-radius: var(--radius-sm);
+	border: 1px solid var(--border-subtle);
+	background-color: var(--black-soft);
+	color: var(--text-on-dark);
+}
+
+.field__input:focus-visible {
+	outline: 2px solid var(--yellow-strong);
+	outline-offset: 2px;
+}
+
+.btn {
+	margin-top: 0.35rem;
+	margin-right: 0.4rem;
+	padding: 0.35rem 0.75rem;
+	border-radius: var(--radius-pill);
+	border: 1px solid var(--yellow-strong);
+	background-color: var(--yellow-strong);
+	color: #000;
+	font-size: 0.85rem;
+	cursor: pointer;
+}
+
+.btn:hover {
+	background-color: #ffe233;
+}
+
+.badge {
+	display: inline-flex;
+	align-items: center;
+	padding: 0.2rem 0.55rem;
+	border-radius: var(--radius-pill);
+	font-size: 0.75rem;
+}
+
+.badge--success {
+	background-color: #2e7d32;
+	color: #e8f5e9;
+}
+
+.badge--warning {
+	background-color: #fdd835;
+	color: #212121;
+}
+
+/* ─── Widget body — shared by all dynamic widget components ─────────────────── */
+
+.widget-body {
+  padding: 0.75rem;
+  color: var(--text-on-dark);
+}
+
+.widget-body__line {
+  margin: 0 0 0.5rem;
+}
+
+.widget-body__note {
+  margin: 0.25rem 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.widget-body__dl {
+  margin: 0 0 0.5rem;
+}
+
+.widget-body__row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.widget-body__row dt {
+  font-weight: 600;
+  min-width: 4.5rem;
+  color: var(--text-muted);
+}
+
+.widget-body__row dd {
+  margin: 0;
+}
+
+.widget-body__empty {
+  margin: 0;
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: 0.875rem;
+}
+
+.widget-body__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.72rem;
+  font-family: 'Courier New', monospace;
+}
+
+.widget-body__list-item {
+  padding: 0.25rem 0;
+  border-bottom: 1px solid var(--border-subtle);
+  word-break: break-all;
+  color: var(--text-muted);
+}
+
+.widget-body__list-item:last-child {
+  border-bottom: none;
+}
+
+/* Supabase real-time status banner inside ActivityWidgetComponent */
+.activity-status {
+  margin: 0 0 0.6rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.activity-status--live {
+  background: rgba(46, 125, 50, 0.2);
+  color: #81c784;
+  border: 1px solid rgba(129, 199, 132, 0.3);
+}
+
+.activity-status--loading {
+  background: rgba(255, 214, 0, 0.08);
+  color: var(--yellow-muted);
+  border: 1px solid rgba(255, 214, 0, 0.2);
+}
+
+.activity-status--error {
+  background: rgba(255, 82, 82, 0.12);
+  color: #ff8a80;
+  border: 1px solid rgba(255, 82, 82, 0.25);
+}
+
+/* Atomic CSS-style utilities (atomcss) */
+
+/* Layout */
+.flex {
+	display: flex;
+}
+
+.flex-col {
+	flex-direction: column;
+}
+
+.items-center {
+	align-items: center;
+}
+
+.justify-between {
+	justify-content: space-between;
+}
+
+.w-full {
+	width: 100%;
+}
+
+/* Spacing (0.25rem steps) */
+.p-1 {
+	padding: 0.25rem;
+}
+
+.p-2 {
+	padding: 0.5rem;
+}
+
+.p-3 {
+	padding: 0.75rem;
+}
+
+.p-4 {
+	padding: 1rem;
+}
+
+.mt-1 {
+	margin-top: 0.25rem;
+}
+
+.mt-2 {
+	margin-top: 0.5rem;
+}
+
+.mt-3 {
+	margin-top: 0.75rem;
+}
+
+.mt-4 {
+	margin-top: 1rem;
+}
+
+.mb-1 {
+	margin-bottom: 0.25rem;
+}
+
+.mb-2 {
+	margin-bottom: 0.5rem;
+}
+
+.mb-3 {
+	margin-bottom: 0.75rem;
+}
+
+.mb-4 {
+	margin-bottom: 1rem;
+}
+
+/* Typography & color */
+.text-sm {
+	font-size: 0.85rem;
+}
+
+.text-lg {
+	font-size: 1.1rem;
+}
+
+.text-yellow {
+	color: var(--yellow-strong);
+}
+
+.text-muted {
+	color: var(--text-muted);
+}
+
+.bg-black {
+	background-color: #000;
+}
+
+.bg-yellow {
+	background-color: var(--yellow-strong);
+}
+
+.rounded {
+	border-radius: var(--radius-md);
+}
+
+.border {
+	border: 1px solid var(--border-subtle);
+}

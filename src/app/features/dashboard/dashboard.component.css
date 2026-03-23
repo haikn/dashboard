@@ -1,0 +1,464 @@
+.page {
+  padding: var(--space-xl);
+}
+
+/* ─── Dynamic widget zone ──────────────────────────────────────────────────── */
+
+.widget-zone-wrapper {
+  padding: 1.5rem 2rem;
+  border-top: 2px solid var(--border-subtle);
+  margin-top: 1rem;
+}
+
+.widget-zone-wrapper__title {
+  font-size: 1.1rem;
+  margin: 0 0 0.35rem;
+  color: var(--yellow-strong);
+}
+
+.widget-zone-wrapper__desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0 0 1rem;
+}
+
+/* Toolbar */
+.widget-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+.widget-toolbar__label {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.widget-toolbar__btn {
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  background: var(--black-soft);
+  color: var(--text-on-dark);
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.widget-toolbar__btn:hover {
+  border-color: var(--yellow-strong);
+  background: rgba(255, 214, 0, 0.08);
+}
+
+/* Empty state */
+.widget-zone__empty {
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+/* Widget grid */
+.widget-zone {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  /* Same as .app-grid: natural cell heights so CDK computes drag targets correctly */
+  align-items: start;
+}
+
+/* Widget card */
+.widget-card {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--color-panel-bg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.widget-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0.75rem;
+  background: rgba(255, 214, 0, 0.06);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.widget-card__title {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--yellow-strong);
+}
+
+.widget-card__remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  line-height: 1;
+}
+
+.widget-card__remove:hover {
+  background: rgba(255, 80, 80, 0.15);
+  color: var(--danger);
+}
+
+/* ─── CDK Drag & Drop ──────────────────────────────────────────────────────── */
+
+/* Grip icon & handle cursors (shared by panels and widgets) */
+.widget-card__header[cdkDragHandle],
+.app-panel__drag-handle[cdkDragHandle] {
+  cursor: grab;
+}
+.widget-card__header[cdkDragHandle]:active,
+.app-panel__drag-handle[cdkDragHandle]:active {
+  cursor: grabbing;
+}
+
+.widget-card__drag-hint,
+.app-panel__drag-grip {
+  font-size: 1rem;
+  color: var(--text-muted);
+  user-select: none;
+  flex-shrink: 0;
+}
+.widget-card__drag-hint { margin-right: 0.4rem; }
+
+/* ── Preview (the ghost that follows the cursor) ───────────────────────────── */
+/* A slight scale-up + rotation gives the feeling of "picking up" the card.   */
+.cdk-drag-preview {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--yellow-strong);
+  background: var(--color-panel-bg);
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.35),
+    0 16px 40px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 214, 0, 0.25);
+  transform: scale(1.03) rotate(0.75deg);
+  opacity: 0.95;
+  /* GPU-composite the preview so other items can animate without jank */
+  will-change: transform;
+}
+
+/* ── Placeholder (the hole left in the source position) ────────────────────── */
+@keyframes placeholder-pulse {
+  0%, 100% { background: rgba(255, 214, 0, 0.04); border-color: var(--yellow-muted); }
+  50%       { background: rgba(255, 214, 0, 0.10); border-color: var(--yellow-strong); }
+}
+
+.cdk-drag-placeholder {
+  border: 2px dashed var(--yellow-muted);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 214, 0, 0.04);
+  min-height: 80px;
+  animation: placeholder-pulse 1.4s ease-in-out infinite;
+  /* Suppress all layout transitions on the placeholder itself */
+  transition: none !important;
+}
+
+/* ── Displacement during drag ──────────────────────────────────────────────
+   CDK's transform-based displacement doesn't work reliably for CSS Grid
+   (grid cells are fixed — translating a sibling doesn't push others).
+   Displacement is handled by the FLIP animation in dropPanel/dropWidget.
+   Only the settle animation (.cdk-drag-animating) is needed here. ────────── */
+
+/* Settle: the dropped item flies from where the pointer released it to
+   its final DOM position (CDK adds this class for one frame after drop). */
+.cdk-drag-animating {
+  transition: transform 300ms cubic-bezier(0.2, 0, 0, 1) !important;
+}
+
+/* ─── Static panel drag handle ─────────────────────────────────────────────── */
+
+.app-panel__drag-handle {
+  /* Pull flush with the panel's own padding so handle spans the full width */
+  margin: -1rem -1.25rem 0.75rem;
+  padding: 0.4rem 0.75rem 0.4rem 0.5rem;
+  background: rgba(255, 214, 0, 0.05);
+  border-bottom: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: background 0.15s;
+}
+
+.app-panel__drag-handle:hover {
+  background: rgba(255, 214, 0, 0.09);
+}
+
+.app-panel__drag-title {
+  margin: 0;                  /* override global .app-panel h2 margin-bottom */
+  font-size: 1rem;
+  color: var(--yellow-strong);
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-panel__body {
+  overflow: scroll;
+  min-height: 320px;
+  /* content below the handle inherits all existing .app-panel spacing */
+}
+
+/* ─── Skeleton loader (prevents layout shift while market data loads) ─────── */
+@keyframes shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
+}
+
+.skeleton-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.5rem 0;
+}
+
+.skeleton-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.skeleton-cell {
+  height: 0.85rem;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    var(--color-panel-bg, #1e1e1e) 25%,
+    rgba(255, 255, 255, 0.06) 50%,
+    var(--color-panel-bg, #1e1e1e) 75%
+  );
+  background-size: 1200px 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+.skeleton-cell--xs { width: 2.5rem; }
+.skeleton-cell--sm { width: 4rem; }
+.skeleton-cell--md { width: 7rem; }
+.skeleton-cell--lg { flex: 1; min-width: 0; }
+
+/* Metal skeleton grid mirrors the metal card layout */
+.skeleton-metals {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.75rem;
+}
+
+.skeleton-metal-card {
+  height: 90px;
+  border-radius: var(--radius-lg, 8px);
+  background: linear-gradient(
+    90deg,
+    var(--color-panel-bg, #1e1e1e) 25%,
+    rgba(255, 255, 255, 0.06) 50%,
+    var(--color-panel-bg, #1e1e1e) 75%
+  );
+  background-size: 1200px 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+/* ─── Reset button in widget toolbar ───────────────────────────────────────── */
+
+.widget-toolbar__sep {
+  color: var(--border-subtle);
+  margin: 0 0.15rem;
+  user-select: none;
+}
+
+.widget-toolbar__btn--reset {
+  border-color: rgba(255, 82, 82, 0.4);
+  color: var(--danger);
+}
+
+.widget-toolbar__btn--reset:hover {
+  background: rgba(255, 82, 82, 0.08);
+  border-color: var(--danger);
+}
+
+/* ─── Market data panels ──────────────────────────────────────────────────── */
+
+/* Price tables — stocks, currencies, crypto */
+.price-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.price-table th {
+  text-align: left;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 0.4rem 0.5rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.price-table td {
+  padding: 0.45rem 0.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.price-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.price-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Column alignment helpers */
+.num-col {
+  text-align: right;
+}
+
+.rank-col {
+  text-align: right;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  width: 30px;
+}
+
+.name-col {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.range-col {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+/* Ticker badge */
+.ticker {
+  font-weight: 700;
+  font-family: var(--font-mono, 'Courier New', monospace);
+  color: var(--yellow-strong);
+  letter-spacing: 0.03em;
+}
+
+/* Monospace price value */
+.price-value {
+  font-family: var(--font-mono, 'Courier New', monospace);
+  font-weight: 600;
+}
+
+/* Price direction colours */
+.price-up {
+  color: #4caf50;
+  font-weight: 600;
+}
+
+.price-down {
+  color: #f44336;
+  font-weight: 600;
+}
+
+/* State message typography */
+.price-loading,
+.price-error,
+.price-offline {
+  font-size: 0.875rem;
+  padding: 1.5rem 0;
+  text-align: center;
+}
+
+.price-error {
+  color: #f44336;
+}
+
+.price-offline {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ─── Precious metals card grid ────────────────────────────────────────────── */
+
+.metals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.75rem;
+}
+
+.metal-card {
+  background: var(--black-soft, #1a1a1a);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg, 8px);
+  padding: 0.9rem 1rem;
+}
+
+.metal-card__name {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin: 0 0 0.35rem;
+}
+
+.metal-card__price {
+  font-size: 1.2rem;
+  font-weight: 700;
+  font-family: var(--font-mono, 'Courier New', monospace);
+  color: var(--text-on-dark, #fff);
+  margin: 0 0 0.25rem;
+}
+
+.metal-card__change {
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin: 0 0 0.2rem;
+}
+
+.metal-card__range {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* ─── Price-change flash animation ─────────────────────────────────────────── */
+/* Applied for 1.5 s whenever a real-time UPDATE changes a row's price.
+   The background colour fades from green/red to transparent (forwards fill). */
+
+@keyframes flash-up {
+  0%   { background-color: rgba(76, 175, 80, 0.40); }
+  100% { background-color: transparent; }
+}
+
+@keyframes flash-down {
+  0%   { background-color: rgba(244, 67, 54, 0.38); }
+  100% { background-color: transparent; }
+}
+
+.price-flash-up {
+  animation: flash-up 2s ease-out forwards;
+}
+
+.price-flash-down {
+  animation: flash-down 2s ease-out forwards;
+}
+
+/* Metal cards need a border-radius-aware flash */
+.metal-card.price-flash-up,
+.metal-card.price-flash-down {
+  animation-duration: 2s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+  border-radius: var(--radius-lg, 8px);
+}
+.metal-card.price-flash-up   { animation-name: flash-up; }
+.metal-card.price-flash-down { animation-name: flash-down; }

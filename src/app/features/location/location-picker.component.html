@@ -1,0 +1,53 @@
+<main class="location-picker-page" role="main">
+  <div class="location-picker-card">
+    <h1 class="location-picker-card__title">Where are you located?</h1>
+    <p class="location-picker-card__desc">
+      Search for your city to personalise your dashboard experience.
+    </p>
+
+    <div class="location-search">
+      <div class="location-search__field">
+        <input
+          class="location-search__input"
+          type="text"
+          [formControl]="searchControl"
+          placeholder="Search for a city…"
+          autocomplete="off"
+          aria-label="City search"
+          aria-autocomplete="list"
+          aria-controls="location-results"
+          (keydown)="onKeydown($event)"
+        />
+        @if (searching()) {
+          <span class="location-search__spinner" aria-label="Searching…" aria-busy="true"></span>
+        }
+      </div>
+
+      @if (results().length) {
+        <ul
+          id="location-results"
+          class="location-results"
+          role="listbox"
+          aria-label="Location suggestions"
+        >
+          @for (loc of results(); track loc.city_name + loc.country_code; let i = $index) {
+            <li
+              class="location-results__item"
+              [class.location-results__item--active]="i === activeIndex()"
+              role="option"
+              [attr.aria-selected]="i === activeIndex()"
+              (click)="select(loc)"
+              (mouseenter)="activeIndex.set(i)"
+            >
+              <span class="location-results__city">{{ loc.city_name }}</span>
+              <span class="location-results__meta">
+                {{ loc.region_name }}
+                <span class="location-results__code">({{ loc.country_code }})</span>
+              </span>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  </div>
+</main>

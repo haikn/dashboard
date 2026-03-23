@@ -1,0 +1,277 @@
+<main class="app-shell" aria-label="Market data dashboard">
+  <header class="app-header">
+    <h1 class="app-header__title">{{ dashboardTitle }}</h1>
+    <p class="app-header__meta">
+      {{ market.connected ? '🟢 Live' : '⚫ Offline' }} · {{ now | date: 'medium' }}
+    </p>
+  </header>
+
+  <!-- ─── Market data panels (drag to reorder) ────────────────────────── -->
+  <section
+    class="app-grid"
+    aria-label="Market panels"
+    cdkDropList
+    cdkDropListOrientation="mixed"
+    (cdkDropListDropped)="dropPanel($event)"
+  >
+    @for (panel of panels(); track panel.id) {
+      <section class="app-panel" cdkDrag #panelItem>
+        <!-- Drag handle -->
+        <div class="app-panel__drag-handle" cdkDragHandle>
+          <span class="app-panel__drag-grip" aria-hidden="true">⠿</span>
+          <h2 class="app-panel__drag-title">{{ panel.title }}</h2>
+        </div>
+
+        <div class="app-panel__body">
+          <!-- ── State decorations ──────────────────────────────────────── -->
+          @if (!market.connected) {
+            <p class="price-offline">
+              Configure Supabase credentials in app.config.ts to see live prices.
+            </p>
+          } @else if (market.loading()) {
+            <!-- Skeleton preserves panel height so the grid never reflows -->
+            @switch (panel.id) {
+              @case ('metals') {
+                <div class="skeleton-metals" aria-label="Loading…" aria-busy="true">
+                  @for (i of [1,2,3,4,5,6]; track i) {
+                    <div class="skeleton-metal-card"></div>
+                  }
+                </div>
+              }
+              @default {
+                <div class="skeleton-table" aria-label="Loading…" aria-busy="true">
+                  @for (i of [1,2,3,4,5,6,7,8]; track i) {
+                    <div class="skeleton-row">
+                      <div class="skeleton-cell skeleton-cell--xs"></div>
+                      <div class="skeleton-cell skeleton-cell--sm"></div>
+                      <div class="skeleton-cell skeleton-cell--lg"></div>
+                      <div class="skeleton-cell skeleton-cell--md"></div>
+                      <div class="skeleton-cell skeleton-cell--md"></div>
+                    </div>
+                  }
+                </div>
+              }
+            }
+          } @else if (market.error()) {
+            <p class="price-error">⚠ {{ market.error() }}</p>
+          } @else {
+            @switch (panel.id) {
+
+              <!-- ── Stocks ──────────────────────────────────────────────── -->
+              @case ('stocks') {
+                <table class="price-table">
+                  <thead>
+                    <tr>
+                      <th>Symbol</th>
+                      <th>Name</th>
+                      <th class="num-col">Price</th>
+                      <th class="num-col">Chg %</th>
+                      <th class="num-col">24h High / Low</th>
+                      <th class="num-col">Volume</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (s of market.stocks(); track s.id) {
+                      <tr
+                        [class.price-flash-up]="market.flashingIds().get(s.id) === 'up'"
+                        [class.price-flash-down]="market.flashingIds().get(s.id) === 'down'"
+                      >
+                        <td><span class="ticker">{{ s.symbol }}</span></td>
+                        <td class="name-col">{{ s.name }}</td>
+                        <td class="price-value num-col">{{ s.price | number: '1.2-4' }}</td>
+                        <td
+                          class="num-col"
+                          [class.price-up]="(s.change_percent ?? 0) >= 0"
+                          [class.price-down]="(s.change_percent ?? 0) < 0"
+                        >
+                          {{ (s.change_percent ?? 0) >= 0 ? '+' : '' }}{{ s.change_percent | number: '1.2-2' }}%
+                        </td>
+                        <td class="num-col range-col">
+                          {{ s.high_24h | number: '1.2-2' }} / {{ s.low_24h | number: '1.2-2' }}
+                        </td>
+                        <td class="num-col">{{ fmtVol(s.volume) }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              }
+
+              <!-- ── Currencies ──────────────────────────────────────────── -->
+              @case ('currencies') {
+                <table class="price-table">
+                  <thead>
+                    <tr>
+                      <th>Pair</th>
+                      <th class="num-col">Rate</th>
+                      <th class="num-col">Bid</th>
+                      <th class="num-col">Ask</th>
+                      <th class="num-col">Chg %</th>
+                      <th class="num-col">24h High / Low</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (c of market.currencies(); track c.id) {
+                      <tr
+                        [class.price-flash-up]="market.flashingIds().get(c.id) === 'up'"
+                        [class.price-flash-down]="market.flashingIds().get(c.id) === 'down'"
+                      >
+                        <td>
+                          <span class="ticker">{{ c.base_currency }}/{{ c.quote_currency }}</span>
+                        </td>
+                        <td class="price-value num-col">{{ c.rate | number: '1.4-6' }}</td>
+                        <td class="num-col">{{ c.bid | number: '1.4-6' }}</td>
+                        <td class="num-col">{{ c.ask | number: '1.4-6' }}</td>
+                        <td
+                          class="num-col"
+                          [class.price-up]="(c.change_percent ?? 0) >= 0"
+                          [class.price-down]="(c.change_percent ?? 0) < 0"
+                        >
+                          {{ (c.change_percent ?? 0) >= 0 ? '+' : '' }}{{ c.change_percent | number: '1.2-2' }}%
+                        </td>
+                        <td class="num-col range-col">
+                          {{ c.high_24h | number: '1.4-6' }} / {{ c.low_24h | number: '1.4-6' }}
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              }
+
+              <!-- ── Precious Metals ─────────────────────────────────────── -->
+              @case ('metals') {
+                <div class="metals-grid">
+                  @for (m of metalsTroyOz(); track m.id) {
+                    <div
+                      class="metal-card"
+                      [class.price-flash-up]="market.flashingIds().get(m.id) === 'up'"
+                      [class.price-flash-down]="market.flashingIds().get(m.id) === 'down'"
+                    >
+                      <p class="metal-card__name">{{ m.metal | titlecase }}</p>
+                      <p class="metal-card__price">${{ m.price | number: '1.2-2' }}</p>
+                      <p
+                        class="metal-card__change"
+                        [class.price-up]="(m.change_percent ?? 0) >= 0"
+                        [class.price-down]="(m.change_percent ?? 0) < 0"
+                      >
+                        {{ (m.change_percent ?? 0) >= 0 ? '▲' : '▼' }}
+                        {{ m.change_percent | number: '1.2-2' }}% · per troy oz
+                      </p>
+                      <p class="metal-card__range">
+                        H: ${{ m.high_24h | number: '1.2-2' }} &nbsp;·&nbsp;
+                        L: ${{ m.low_24h | number: '1.2-2' }}
+                      </p>
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- ── Cryptocurrency ──────────────────────────────────────── -->
+              @case ('crypto') {
+                <table class="price-table">
+                  <thead>
+                    <tr>
+                      <th class="rank-col">#</th>
+                      <th>Symbol</th>
+                      <th>Name</th>
+                      <th class="num-col">Price (USD)</th>
+                      <th class="num-col">24h Chg %</th>
+                      <th class="num-col">Market Cap</th>
+                      <th class="num-col">24h Volume</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (c of market.crypto(); track c.id) {
+                      <tr
+                        [class.price-flash-up]="market.flashingIds().get(c.id) === 'up'"
+                        [class.price-flash-down]="market.flashingIds().get(c.id) === 'down'"
+                      >
+                        <td class="rank-col">{{ c.market_cap_rank ?? '—' }}</td>
+                        <td><span class="ticker">{{ c.symbol }}</span></td>
+                        <td class="name-col">{{ c.name }}</td>
+                        <td class="price-value num-col">${{ c.price_usd | number: '1.2-6' }}</td>
+                        <td
+                          class="num-col"
+                          [class.price-up]="(c.change_percent_24h ?? 0) >= 0"
+                          [class.price-down]="(c.change_percent_24h ?? 0) < 0"
+                        >
+                          {{ (c.change_percent_24h ?? 0) >= 0 ? '+' : '' }}{{ c.change_percent_24h | number: '1.2-2' }}%
+                        </td>
+                        <td class="num-col">{{ fmtCap(c.market_cap) }}</td>
+                        <td class="num-col">{{ fmtVol(c.volume_24h) }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              }
+
+            }
+          }
+        </div>
+      </section>
+    }
+  </section>
+
+  <!-- ─── Dynamic widget zone ─────────────────────────────────────────── -->
+  <section class="widget-zone-wrapper" aria-label="Dynamic widgets">
+    <h2 class="widget-zone-wrapper__title">Widgets</h2>
+    <p class="widget-zone-wrapper__desc">
+      Each button below lazily imports its component class via <code>import()</code>,
+      then renders it using <code>NgComponentOutlet</code>. The chunk is only downloaded
+      when first requested.
+    </p>
+
+    <div class="widget-toolbar" role="toolbar" aria-label="Add widget">
+      <span class="widget-toolbar__label">Add widget:</span>
+      @for (type of widgetTypes; track type) {
+        <button type="button" class="widget-toolbar__btn" (click)="addWidget(type)">
+          {{ WIDGET_CATALOG[type].icon }} {{ WIDGET_CATALOG[type].label }}
+        </button>
+      }
+      <span class="widget-toolbar__sep" aria-hidden="true">|</span>
+      <button
+        type="button"
+        class="widget-toolbar__btn widget-toolbar__btn--reset"
+        (click)="resetLayout()"
+      >
+        ↺ Reset layout
+      </button>
+    </div>
+
+    @if (widgets().length === 0) {
+      <p class="widget-zone__empty">
+        No widgets on the dashboard yet — click a button above to load one.
+      </p>
+    } @else {
+      <div
+        class="widget-zone"
+        cdkDropList
+        cdkDropListOrientation="mixed"
+        (cdkDropListDropped)="dropWidget($event)"
+      >
+        @for (widget of widgets(); track widget.id) {
+          <div class="widget-card" cdkDrag #widgetItem>
+            <div class="widget-card__header" cdkDragHandle>
+              <span class="widget-card__drag-hint" aria-hidden="true">⠿</span>
+              <span class="widget-card__title">
+                {{ WIDGET_CATALOG[widget.type].icon }} {{ widget.label }}
+              </span>
+              <button
+                type="button"
+                class="widget-card__remove"
+                (click)="removeWidget(widget.id)"
+                [attr.aria-label]="'Remove ' + widget.label + ' widget'"
+              >
+                ✕
+              </button>
+            </div>
+            <ng-container
+              [ngComponentOutlet]="widget.component"
+              [ngComponentOutletInputs]="getWidgetInputs(widget)"
+            />
+          </div>
+        }
+      </div>
+    }
+  </section>
+</main>
+
